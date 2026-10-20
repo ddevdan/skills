@@ -20,5 +20,5 @@ Two skills call skills from [mattpocock/skills](https://github.com/mattpocock/sk
 | `ship-pr` | [`pr`](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr): writes the PR body. | No. Without it, `ship-pr` writes a short Summary and Testing body. |
 
 ```bash
-npx skills add mattpocock/skills --skill code-review --skill pr
+npx skills add mattpocock/skills --skill code-review pr
 ```
