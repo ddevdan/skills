@@ -2,6 +2,21 @@
 
 Agent skills for Claude Code and other agents that read `SKILL.md`.
 
+## Install
+
+Install with the [`skills`](https://skills.sh) CLI:
+
+```bash
+npx skills add ddevdan/skills                      # pick skills interactively
+npx skills add ddevdan/skills --skill ship-pr      # one skill
+npx skills add ddevdan/skills --skill dispatch dispatch-worker
+npx skills add ddevdan/skills -g                   # global, not this project
+```
+
+`emoji-code-review` and `ship-pr` use skills from another repo. See [Dependencies](#dependencies).
+
+## Skills
+
 | Skill | What it does |
 |---|---|
 | [`dispatch`](skills/dispatch) | Turns a ticket queue (Jira, GitHub issues, a PRD) into parallel agent work on isolated worktrees. |
