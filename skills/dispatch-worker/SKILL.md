@@ -18,7 +18,7 @@ The card is the single source of your ticket's facts: id, ticket text location, 
 ## Implement
 
 1. Read the ticket text at `<card: ticket>`, and `<card: spec>` when there is one. The ticket text is your scope; the spec is the context it must fit.
-2. Implement it following `/skill:implement`, with the **Rules** below taking precedence where they differ. Skip its `/code-review` step: reviewing is the orchestrator's job.
+2. End your turn. The orchestrator sends `implement` as your next prompt through herdr. Never try to load `implement` with a tool: it is user-only, and the call fails. If a call to it fails anyway, that is a Blocker: never implement without it. When it arrives, implement the ticket with it, with the **Rules** below taking precedence where they differ. Skip its `/code-review` step: reviewing is the orchestrator's job.
 3. Before **Finish**, inspect your diff against the ticket. Check changed module interfaces, removed abstractions, and existing stored data or callers that the change must still support. This is a self-check, not `/code-review`.
 4. Go to **Finish**.
 

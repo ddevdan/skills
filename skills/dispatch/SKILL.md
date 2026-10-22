@@ -90,11 +90,15 @@ herdr agent start <id> --kind pi --pane <pane_id> -- --model openai-codex/gpt-5.
 
 Worktrees live beside the repo, not inside it, so the main checkout's tools never collect their files. A new worktree has no untracked files, so copy the ones the stack needs into `$WT` (`.env` and the like — whatever the setup test run needed).
 
-Write the ticket's card to `.herd/briefs/<id>.md` from [BRIEF.md](BRIEF.md). Done when every field is filled and no `<...>` slot is left. The worker's rules live in the `dispatch-worker` skill, not the card. Start the worker — no `--wait`; the prompt returns once herdr has submitted it:
+Write the ticket's card to `.herd/briefs/<id>.md` from [BRIEF.md](BRIEF.md). Done when every field is filled and no `<...>` slot is left. The worker's rules live in the `dispatch-worker` skill, not the card. Start the worker with two herdr prompts. `dispatch-worker` and `implement` are user-only skills (`disable-model-invocation`), so the worker cannot load either one with a tool — each must arrive as a slash command in a herdr prompt. Use the worker harness's syntax: `/skill:<name>` for `--kind pi`, `/<name>` for `--kind claude`.
 
 ```bash
 herdr agent prompt <id> "/skill:dispatch-worker <abs path to .herd/briefs/<id>.md>"
+herdr agent wait <id> --until idle --timeout 300000   # the worker reads its card and ticket, then stops
+herdr agent prompt <id> "/skill:implement Implement the ticket in <abs path to .herd/briefs/<id>.md>. Follow the dispatch-worker Rules and Finish."
 ```
+
+No `--wait` on the prompts; each returns once herdr has submitted it.
 
 Set the row to `running`.
 
