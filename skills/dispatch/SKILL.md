@@ -43,6 +43,7 @@ Requires `HERDR_ENV=1`. Load `/herdr` for CLI details when a command below misbe
 
    - `git diff --quiet <recorded sha> <parent> -- <the files setup.md lists>` exits 0 (compose files, Dockerfiles, lockfiles, test settings).
    - Every file that setup.md names still exists (`.herd/compose.test.yaml` and the like).
+   - `shasum -c .herd/setup.sha` passes. It covers the `.herd/` files the command reads, which git cannot see. A missing `.herd/setup.sha` fails this check.
    - The user did not ask for a fresh setup.
 
    Then copy `run-limited.sh` and `stop-procs.sh` into `.herd/bin/` again (the skill can update them) and go to The loop. If any check fails, do steps 4 and 5 again, starting from what setup.md records, not from nothing. If a ticket's first test run later fails for a setup reason and not because of the ticket's code, do the same. If `.herd/setup.md` does not exist but an archived queue has a test command, start from that command.
@@ -60,11 +61,11 @@ Requires `HERDR_ENV=1`. Load `/herdr` for CLI details when a command below misbe
    - The mount must not let the container write its dependencies into the worktree: in `.herd/compose.test.yaml`, mask the container's virtualenv and `node_modules` paths with anonymous volumes (e.g. `- /app/backend/.venv`). Add `--build` only on a ticket's first run and after a dependency change.
    - If the settings don't read the database name from an env var, or the tests use other services from the stack (Redis, Celery), stop and tell the user — those need their own per-ticket split.
 
-   Write the command to `.herd/setup.md` with `<id>` and `<db>` left as slots. Under it, list the files the command depends on (compose files, Dockerfiles, lockfiles, test settings). The dev stack must stay up for the whole run. Done when the command passes on the parent from a throwaway worktree, with `<db>` = `setup`, while the user's own stack is up. Then remove that worktree the same way Merge cleans up a ticket (`stop-procs.sh`, `git worktree remove --force`), so no later run finds it in place. Record the parent's commit SHA in `.herd/setup.md` as the commit where setup passed.
+   Write the command to `.herd/setup.md` with `<id>` and `<db>` left as slots. Under it, list the files the command depends on (compose files, Dockerfiles, lockfiles, test settings). The dev stack must stay up for the whole run. Done when the command passes on the parent from a throwaway worktree, with `<db>` = `setup`, while the user's own stack is up. Then remove that worktree the same way Merge cleans up a ticket (`stop-procs.sh`, `git worktree remove --force`), so no later run finds it in place. Record the parent's commit SHA in `.herd/setup.md` as the commit where setup passed, then run `shasum .herd/compose.test.yaml <every other .herd/ file the command reads> > .herd/setup.sha`.
 
 5. **Process guard** — copy [run-limited.sh](run-limited.sh) and [stop-procs.sh](stop-procs.sh) from this skill's folder into `.herd/bin/` and make them executable. If the project also has checks that run on the host, outside Docker (type checks such as `svelte-check` or `tsc`, frontend unit tests, Playwright), write each one to `.herd/setup.md` under the test command, already wrapped: `.herd/bin/run-limited.sh <seconds> <check>`. Give each one a limit of about 3× its normal run time. Done when each host check passes once from the throwaway worktree through its wrapper.
 
-`.herd/setup.md` stays in place between runs; never archive it with the queue. The queue is the single source of truth for this run. Update it on every state change — it is what survives a compaction.
+`.herd/setup.md` and `.herd/setup.sha` stay in place between runs; never archive them with the queue. The queue is the single source of truth for this run. Update it on every state change — it is what survives a compaction.
 
 ## Long-running commands
 
