@@ -14,7 +14,7 @@ Copy into `.herd/briefs/<id>.md` and fill every `<...>` slot. The worker's rules
 - **branch**: `dispatch/<id>`
 - **parent**: `<parent>`
 - **test command**: `<test command with <id> and <db> filled in>`
-- **host checks**: <each host check from the queue, wrapped in `<abs path to .herd/bin>/run-limited.sh`, or "none">
+- **host checks**: <each host check from `.herd/setup.md`, wrapped in `<abs path to .herd/bin>/run-limited.sh`, or "none">
 - **process guard**: `<abs path to .herd/bin>`
 - **report**: `<abs path to .herd/reports/<id>.md>`
 - **orchestrator pane**: `<your $HERDR_PANE_ID>`

@@ -30,7 +30,7 @@ Requires `HERDR_ENV=1`. Load `/herdr` for CLI details when a command below misbe
    ```
 
    This new branch is `<parent>` for every ticket worktree and every later squash merge. Never use the branch that was checked out when dispatch started as `<parent>`. If `<base>` is `main` or `master`, ask for confirmation before creating the integration branch. If the requested integration branch already exists, ask the user for a different name rather than reusing it. The main checkout stays on the integration branch for the whole run; it is where you merge.
-2. **Queue** — turn the tickets, from whatever source the user points at (Jira keys, GitHub issues, a PRD, a ticket list), into `.herd/queue.md`. Add `.herd/` to `.git/info/exclude`. One row per ticket:
+2. **Queue** — turn the tickets, from whatever source the user points at (Jira keys, GitHub issues, a PRD, a ticket list), into `.herd/queue.md`. Add `.herd/` to `.git/info/exclude`. If a `.herd/queue.md` from an earlier run exists, move it and the `briefs/`, `reports/` and `reviews/` folders into `.herd/archive/<its parent branch>/` first. One row per ticket:
 
    | id | title | depends on | status | agent | pane | worktree |
    |----|-------|------------|--------|-------|------|----------|
@@ -39,7 +39,15 @@ Requires `HERDR_ENV=1`. Load `/herdr` for CLI details when a command below misbe
 
    Done when every ticket has a row, its full text, and its dependencies read from the source (Jira "blocks" links, "depends on" lines, obvious ordering in a PRD). Tickets that will edit the same files also depend on each other: chain them in `depends on` even when the source is silent.
 
-3. **Test command** — the project's tests run in Docker, and a plain `docker compose run` from a worktree breaks two ways: it mounts whichever checkout it runs from, and every ticket would test against the same database. Each ticket gets its own app container, mounting its own worktree, on the **user's dev stack Postgres**, with its own database named after the worktree. Find how the suite runs today (compose file, Makefile, README) and how the settings read the database name, then build one command that every ticket uses:
+3. **Reuse an earlier setup** — a project that ran dispatch before has `.herd/setup.md`. Read it. It holds the test command, the host checks, and the commit SHA where they last passed. Reuse it, and skip steps 4 and 5, when all of these are true:
+
+   - `git diff --quiet <recorded sha> <parent> -- <the files setup.md lists>` exits 0 (compose files, Dockerfiles, lockfiles, test settings).
+   - Every file that setup.md names still exists (`.herd/compose.test.yaml` and the like).
+   - The user did not ask for a fresh setup.
+
+   Then copy `run-limited.sh` and `stop-procs.sh` into `.herd/bin/` again (the skill can update them) and go to The loop. If any check fails, do steps 4 and 5 again, starting from what setup.md records, not from nothing. If a ticket's first test run later fails for a setup reason and not because of the ticket's code, do the same. If `.herd/setup.md` does not exist but an archived queue has a test command, start from that command.
+
+4. **Test command** — the project's tests run in Docker, and a plain `docker compose run` from a worktree breaks two ways: it mounts whichever checkout it runs from, and every ticket would test against the same database. Each ticket gets its own app container, mounting its own worktree, on the **user's dev stack Postgres**, with its own database named after the worktree. Find how the suite runs today (compose file, Makefile, README) and how the settings read the database name, then build one command that every ticket uses:
 
    ```bash
    docker compose -p <repo>-<id> -f <compose file> -f <abs path to .herd/compose.test.yaml> \
@@ -52,11 +60,11 @@ Requires `HERDR_ENV=1`. Load `/herdr` for CLI details when a command below misbe
    - The mount must not let the container write its dependencies into the worktree: in `.herd/compose.test.yaml`, mask the container's virtualenv and `node_modules` paths with anonymous volumes (e.g. `- /app/backend/.venv`). Add `--build` only on a ticket's first run and after a dependency change.
    - If the settings don't read the database name from an env var, or the tests use other services from the stack (Redis, Celery), stop and tell the user — those need their own per-ticket split.
 
-   Write the command at the top of `.herd/queue.md` with `<id>` and `<db>` left as slots. The dev stack must stay up for the whole run. Done when the command passes on the parent from a throwaway worktree, with `<db>` = `setup`, while the user's own stack is up. Then remove that worktree the same way Merge cleans up a ticket (`stop-procs.sh`, `git worktree remove --force`), so no later run finds it in place.
+   Write the command to `.herd/setup.md` with `<id>` and `<db>` left as slots. Under it, list the files the command depends on (compose files, Dockerfiles, lockfiles, test settings). The dev stack must stay up for the whole run. Done when the command passes on the parent from a throwaway worktree, with `<db>` = `setup`, while the user's own stack is up. Then remove that worktree the same way Merge cleans up a ticket (`stop-procs.sh`, `git worktree remove --force`), so no later run finds it in place. Record the parent's commit SHA in `.herd/setup.md` as the commit where setup passed.
 
-4. **Process guard** — copy [run-limited.sh](run-limited.sh) and [stop-procs.sh](stop-procs.sh) from this skill's folder into `.herd/bin/` and make them executable. If the project also has checks that run on the host, outside Docker (type checks such as `svelte-check` or `tsc`, frontend unit tests, Playwright), write each one at the top of `.herd/queue.md` under the test command, already wrapped: `.herd/bin/run-limited.sh <seconds> <check>`. Give each one a limit of about 3× its normal run time. Done when each host check passes once from the throwaway worktree through its wrapper.
+5. **Process guard** — copy [run-limited.sh](run-limited.sh) and [stop-procs.sh](stop-procs.sh) from this skill's folder into `.herd/bin/` and make them executable. If the project also has checks that run on the host, outside Docker (type checks such as `svelte-check` or `tsc`, frontend unit tests, Playwright), write each one to `.herd/setup.md` under the test command, already wrapped: `.herd/bin/run-limited.sh <seconds> <check>`. Give each one a limit of about 3× its normal run time. Done when each host check passes once from the throwaway worktree through its wrapper.
 
-The queue is the single source of truth. Update it on every state change — it is what survives a compaction.
+`.herd/setup.md` stays in place between runs; never archive it with the queue. The queue is the single source of truth for this run. Update it on every state change — it is what survives a compaction.
 
 ## Long-running commands
 
@@ -161,6 +169,6 @@ Then dispatch every ticket that just became ready.
 
 ## Finish
 
-The run is over when every row is `merged` or `blocked`. Before you report, sweep: run `.herd/bin/stop-procs.sh` on every worktree path in the queue that still exists (blocked tickets keep their worktree, but nothing may keep running in it), and run `pgrep -fl` for each host check command from Setup 4. Stop anything the run started.
+The run is over when every row is `merged` or `blocked`. Before you report, sweep: run `.herd/bin/stop-procs.sh` on every worktree path in the queue that still exists (blocked tickets keep their worktree, but nothing may keep running in it), and run `pgrep -fl` for each host check command in `.herd/setup.md`. Stop anything the run started.
 
 Report to the user: the merged commits on the parent (`git log --oneline`), each ticket whose source update failed, each blocked ticket with its open question, anything the agents flagged outside their ticket, and every worktree still in place with the reason. For GitHub issues, also give one `Closes #<n>` line per merged issue, ready to paste into the PR description. The PR is theirs to open.
