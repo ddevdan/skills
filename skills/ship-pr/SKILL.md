@@ -69,10 +69,16 @@ If the change is genuinely atomic (single concern), one commit is correct — do
 
 If the `pr` skill is not available, write a short Summary + Testing body in the template's shape.
 
+**Show each fact once.** If the Summary already has a table of cases, Evidence points at it and does not repeat it. Add no sections that the template or the `pr` skill do not have (e.g. "How to reproduce").
+
+**One ticket link per PR.** Link only the PR's own ticket. Mention a related ticket by its bare key (`related to ABC-456`), never as a URL or link: tracker automations (e.g. Jira) attach the PR to every ticket linked in the body.
+
 Write the body to a temp file and pass `--body-file` to avoid shell-quoting issues.
 
 ## Guardrails
 
 - **Stop before push and before `gh pr create`** — both are outward-facing. Get explicit go-ahead; one go-ahead covers both only if the user says so.
+- **Every push needs its own go-ahead**, including review-fix pushes to an existing PR and `--force-with-lease` after a rebase. An earlier go-ahead does not carry over to a later push.
 - Don't commit secrets, `.env`, or unrelated working-tree changes — show the file list and confirm if anything looks off.
 - **An open PR already exists for the current branch ⇒ update it, never open a second.**
+- **Never link more than one ticket in the PR body.** Related tickets get their bare key only.
