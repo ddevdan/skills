@@ -1,0 +1,25 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ddevdan",
+  "owner": {
+    "name": "ddevdan",
+    "url": "https://github.com/ddevdan"
+  },
+  "description": "ddevdan's agent skills: ticket dispatch to parallel agents, PR shipping, emoji code review, Simplified Technical English, and low-text visual explanations.",
+  "plugins": [
+    {
+      "name": "ddevdan-skills",
+      "source": "./",
+      "description": "dispatch, dispatch-worker, ship-pr, emoji-code-review, simplified-technical-english, visual-explainer.",
+      "category": "productivity",
+      "keywords": [
+        "skills",
+        "dispatch",
+        "pull-request",
+        "code-review",
+        "technical-writing",
+        "diagrams"
+      ]
+    }
+  ]
+}

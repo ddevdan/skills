@@ -4,7 +4,20 @@ Agent skills for Claude Code and other agents that read `SKILL.md`.
 
 ## Install
 
-Install with the [`skills`](https://skills.sh) CLI:
+### Claude Code plugin
+
+In Claude Code, add this repo as a marketplace and install the plugin, which holds every skill:
+
+```
+/plugin marketplace add ddevdan/skills
+/plugin install ddevdan-skills@ddevdan
+```
+
+Plugin skills are namespaced, for example `/ddevdan-skills:visual-explainer`. Get later changes with `/plugin marketplace update ddevdan`.
+
+### skills CLI
+
+Install one skill at a time with the [`skills`](https://skills.sh) CLI:
 
 ```bash
 npx skills add ddevdan/skills                      # pick skills interactively

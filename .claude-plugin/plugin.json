@@ -1,0 +1,25 @@
+{
+  "name": "ddevdan-skills",
+  "description": "ddevdan's agent skills: ticket dispatch to parallel agents, PR shipping, emoji code review, Simplified Technical English, and low-text visual explanations.",
+  "author": {
+    "name": "ddevdan",
+    "url": "https://github.com/ddevdan"
+  },
+  "repository": "https://github.com/ddevdan/skills",
+  "keywords": [
+    "skills",
+    "dispatch",
+    "pull-request",
+    "code-review",
+    "technical-writing",
+    "diagrams"
+  ],
+  "skills": [
+    "./skills/dispatch",
+    "./skills/dispatch-worker",
+    "./skills/ship-pr",
+    "./skills/emoji-code-review",
+    "./skills/simplified-technical-english",
+    "./skills/visual-explainer"
+  ]
+}
